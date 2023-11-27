@@ -71,7 +71,7 @@ class LoginController extends Controller
         ], [
             'name'  => $googleUser->name,
             'email' => $googleUser->email,
-            'phone' => $googleUser->phonenumber
+            'password'  => encrypt('nqla_default_pwd')
         ]);
 
         Auth::login($user);
