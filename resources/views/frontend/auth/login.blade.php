@@ -59,7 +59,7 @@
                     </div>
                     <div class="method">
                         <div class="method-control">
-                            <a href="#" class="method-action">
+                            <a href="{{ route('login.google.redirect') }}" class="method-action">
                                 <i class="icofont-brand-google"></i>
                                 <span>{{ __('Sign in with Google') }}</span>
                             </a>

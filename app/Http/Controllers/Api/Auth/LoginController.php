@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Api\BaseController;
+use App\Http\Resources\UserResource;
 use App\Http\Traits\VerifyUser;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-
 class LoginController extends BaseController
 {
     use VerifyUser;
@@ -16,7 +16,7 @@ class LoginController extends BaseController
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'phonenumber' => 'sometimes|nullable|numeric',
+            'phone'     => 'sometimes|nullable|numeric',
             'email'     => 'sometimes|nullable',
             'password'  => 'required|string',
             'fcm_token' => 'required|string'
@@ -29,12 +29,19 @@ class LoginController extends BaseController
             'password' => $request->get('password')
         ];
 
-        if($request->get('phonenumber'))
-            $credentials['phonenumber'] = $request->get('phonenumber');
+        if($request->get('phone'))
+            $credentials['phone'] = $request->get('phone');
         elseif ($request->get('email'))
             $credentials['email'] = $request->get('email');
         else
             return $this->sendError(__('Auth Error!'), ['s_authError'], 401);
+
+        $user = User::where('email', $request->get('email'))
+            ->orWhere('phone', $request->get('phone'))
+            ->first();
+
+        if (!$user)
+            return $this->sendError(__("s_userNotExist"), [__("User doesn't exist")], 401);
 
         if(Auth::attempt($credentials)) {
             $this->generateCode(['return' => true]);
@@ -44,7 +51,7 @@ class LoginController extends BaseController
             return $this->sendResponse([], __('Please verify your email'));
         }
 
-        return $this->sendError(__('Auth Error!'), [__('Auth Error!')], 401);
+        return $this->sendError(__("Password or email doesn't match with our records"), [__("Password or email doesn't match with our records")], 401);
 
     }
 
@@ -72,6 +79,7 @@ class LoginController extends BaseController
 
 
         $success['token'] = $user->createToken('nqla')->plainTextToken;
+        $success['user'] = new UserResource($user);
         return $this->sendResponse($success, __('Verified Successfully'));
     }
 

@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Laravel\Socialite\Facades\Socialite;
 
 class LoginController extends Controller
 {
@@ -54,6 +55,29 @@ class LoginController extends Controller
         return response()->json([
             'error'     => __('The provided credentials do not match our records')
         ], 422);
+    }
+
+    public function redirectToGoogle()
+    {
+        return Socialite::driver('google')->redirect();
+    }
+
+    public function handleGoogleCallback()
+    {
+        $googleUser = Socialite::driver('google')->user();
+
+        $user = User::updateOrCreate([
+            'google_id' => $googleUser->id,
+        ], [
+            'name'  => $googleUser->name,
+            'email' => $googleUser->email,
+            'phone' => $googleUser->phonenumber
+        ]);
+
+        Auth::login($user);
+        session()->put('otp_code', true);
+
+        return redirect()->route('home');
     }
 
     public function logout()

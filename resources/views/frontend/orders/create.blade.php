@@ -270,10 +270,10 @@
                         if (results[0]) {
                             var addressComponents = results[0].address_components;
                             var cityName = '';
-                            infoWindow.setContent(
-                                JSON.stringify(results[0].formatted_address),
-                            );
-                            infoWindow.open(map);
+                            // infoWindow.setContent(
+                            //     JSON.stringify(results[0].formatted_address),
+                            // );
+                            // infoWindow.open(map);
 
                             $('#searchInput').val(JSON.stringify(results[0].formatted_address));
 
@@ -379,7 +379,7 @@
                         data_type: 'html',
                         method: "POST",
                         data: {
-                            _token: '{{ csrf_token() }}',
+                            _token: "{{ csrf_token() }}",
                             truck_id: truckId
                         }, success: function (data) {
                             $('.truck_types').html(data);
@@ -417,9 +417,11 @@
             $('#order-form').submit(function (e) {
                 e.preventDefault();
 
+                var makingOrder = $(this).data('make-order');
                 var inputs = $('#order-form :input');
                 var values = {};
                 var addresses = [];
+                console.log("Order " + makingOrder);
 
                 $('.address').each(function() {
                     if ($(this).data('address')) {
@@ -435,8 +437,6 @@
                 inputs.each(function() {
                     values[this.name] = $(this).val();
                 });
-
-                console.log(addresses);
 
                 $.ajax({
                     url: "{{ route('user.orders.calculate') }}",
@@ -457,9 +457,13 @@
                         $('.input-submit').prop('disabled', true);
                         $('#preloder').fadeIn();
                     }, success: function (data) {
+                        $('#total').html(data.total + " SAR");
+                        $('#commission').html(data.commission + " %");
+                        $('#open_trip').html(data.open_value + " SAR");
+                        $('#kilometers').html(data.total_distance + " KM");
+
                         $('#preloder').fadeOut();
-                        $('.login-content').fadeOut();
-                        $('.login-container').html(data);
+                        $('.input-submit').prop('disabled', false);
                     }, error: function(data) {
                         $.each(data.responseJSON.errors, function(key, value) {
                             $('.error').append("<p class='mb-0'>" +
@@ -627,8 +631,8 @@
                             <hr>
 
                             <div class="input-control">
-                                <input type="submit" class="input-submit" value="{{ __('Calculate Price') }}">
-                                <input type="submit" class="input-submit" value="{{ __('Make the order') }}">
+                                <input type="submit" class="input-submit" data-make-order="false" value="{{ __('Calculate Price') }}">
+                                <input type="submit" class="input-submit" data-make-order="true" value="{{ __('Make the order') }}">
                             </div>
 
                         </form>
@@ -640,18 +644,23 @@
 
                             <div>
                                 <div class="pick_pack_cost">
-                                    Pick/Pack:<br>
-                                    <span class="currency">0.00</span>
+                                    {{ __('Commission') }}:<br>
+                                    <span id="commission">0.00</span>
                                 </div>
 
                                 <div class="shipping">
-                                    Shipping:<br>
-                                    <span class="currency">0.00</span>
+                                    {{ __('Open trip value') }}:<br>
+                                    <span id="open_trip">0.00</span>
+                                </div>
+
+                                <div class="shipping">
+                                    {{ __('Total Distance') }}:<br>
+                                    <span id="kilometers">0.00</span>
                                 </div>
 
                                 <div class="total">
-                                    <strong>Total:<br>
-                                        <span class="currency">0.00</span>
+                                    <strong>{{ __('Total') }}:<br>
+                                        <span id="total">0.00</span>
                                     </strong>
                                 </div>
                             </div>

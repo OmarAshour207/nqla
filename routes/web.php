@@ -82,6 +82,9 @@ Route::middleware(['check.auth'])->group(function () {
 
     Route::get('/register', [RegisterController::class, 'show'])->name('user.register.show');
     Route::post('/register/submit', [RegisterController::class, 'register'])->name('user.register');
+
+    Route::get('/auth/google/redirect', [UserLoginController::class, 'redirectToGoogle'])->name('login.google.redirect');
+    Route::get('/auth/google/callback', [UserLoginController::class, 'handelGoogleCallback'])->name('login.google.callback');
 });
 
 Route::get('/language/{locale}', [SettingController::class, 'changeLocale'])->name('change.locale');
