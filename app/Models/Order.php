@@ -11,10 +11,17 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_email',
+        'track_id',
         'user_id',
         'truck_id',
         'truck_type_id',
+        'load_id',
+        'delivery_status',
+        'payment_status',
         'quantity',
+        'vat',
+        'commission',
         'discount',
         'sub_total',
         'total',
@@ -37,8 +44,13 @@ class Order extends Model
         return $this->belongsTo(TruckType::class, 'truck_type_id');
     }
 
+    public function loads(): Relation
+    {
+        return $this->belongsTo(Load::class, 'load_id');
+    }
+
     public function addresses(): Relation
     {
-        return $this->hasMany(Address::class, 'id', 'order_id');
+        return $this->hasMany(Address::class, 'order_id');
     }
 }

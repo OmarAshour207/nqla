@@ -42,4 +42,9 @@ class TruckType extends Model
     {
         return $this->belongsTo(Truck::class);
     }
+
+    public function loads()
+    {
+        return $this->hasMany(Load::class, 'truck_type_id');
+    }
 }

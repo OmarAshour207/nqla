@@ -16,7 +16,7 @@ return new class extends Migration
 
             $table->string('user_email')->nullable();
 
-            $table->string('track_id')->unique();
+            $table->string('track_id')->unique()->index();
 
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
@@ -36,6 +36,9 @@ return new class extends Migration
             $table->string('payment_status')->default('pending');
 
             $table->integer('quantity')->default(1);
+
+            $table->decimal('vat')->default(0.0);
+            $table->decimal('commission')->default(0.0);
 
             $table->decimal('discount')->nullable();
 

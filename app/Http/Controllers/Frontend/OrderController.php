@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Http\Traits\OrderOperations;
 use App\Models\City;
 use App\Models\Load;
 use App\Models\Price;
@@ -12,6 +13,7 @@ use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
+    use OrderOperations;
     public function show()
     {
         return view('frontend.orders.index');
@@ -54,19 +56,27 @@ class OrderController extends Controller
         $tripOpenValue = 15;
 
         $address = $data['address'];
+        $quantity = $data['quantity'];
 
         for ($i = 0; $i < count($address) - 1;$i++) {
             // get the city from the database to get the price
             $city = $address[$i]['city'];
-            $city = explode(' ', $city);
-            $city = City::whereTranslation('name', $city[0])
-                ->orWhereTranslation('name', $city[1])
-                ->first();
+            $cityParts = explode(' ', $city);
+
+            $city = City::when($cityParts, function ($query) use ($cityParts) {
+                for ($j = 0;$j < count($cityParts);$j++) {
+                    if ($j == 0)
+                        $query->whereTranslation('name', $cityParts[$j]);
+                    else
+                        $query->orWhereTranslation('name', $cityParts[$j]);
+                }
+            })->first();
 
             if (!$city)
                 return response()->json([
                     'errors' => ['city' => __('City not supported')]
                 ], 422);
+
             $price = Price::where('city_id', $city->id)
                 ->where('truck_id', $data['truck_id'])
                 ->where('truck_type_id', $data['truck_type_id'])
@@ -84,7 +94,7 @@ class OrderController extends Controller
 
             $total += $price->price * $kilometers;
         }
-        $total += ($total * $commission) + $tripOpenValue;
+        $total += ($total * $commission) + $tripOpenValue * $quantity;
 
         return response()->json([
             'total'         => (float) number_format($total, 2, '.', ''),
@@ -94,23 +104,5 @@ class OrderController extends Controller
         ]);
     }
 
-    public function calculateDistance($source, $destination): float
-    {
-        $earthRadius = 6371;
-        $srcLat = deg2rad($source['lat']);
-        $srcLng = deg2rad($source['lng']);
-        $destLat = deg2rad($destination['lat']);
-        $destLng = deg2rad($destination['lng']);
 
-        $lonDelta = $destLng - $srcLng;
-
-        $a = pow(cos($destLat) * sin($lonDelta), 2) +
-            pow(cos($srcLat) * sin($destLat) - sin($srcLat) * cos($destLat) * cos($lonDelta), 2);
-
-        $b = sin($srcLat) * sin($destLat) + cos($srcLat) * cos($destLat) * cos($lonDelta);
-
-        $angle = atan2(sqrt($a), $b);
-
-        return $angle * $earthRadius;
-    }
 }

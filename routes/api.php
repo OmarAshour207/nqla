@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\RegisterController;
+use App\Http\Controllers\Api\OrderController;
 
 Route::middleware('api')->group(function () {
     Route::post('login', [LoginController::class, 'login']);
@@ -11,6 +12,7 @@ Route::middleware('api')->group(function () {
     Route::post('otp/resend', [LoginController::class, 'resend']);
 
     Route::middleware('auth:sanctum')->group(function () {
-
+        Route::get('orders/config', [OrderController::class, 'config'])->name('order.config');
+        Route::post('orders/calculate', [OrderController::class, 'calculate'])->name('order.calculate');
     });
 });

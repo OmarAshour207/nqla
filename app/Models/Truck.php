@@ -34,4 +34,11 @@ class Truck extends Model
     {
         return url('uploads/trucks/thumb_' . $this->image);
     }
+
+    // Relations
+
+    public function types()
+    {
+        return $this->hasMany(TruckType::class, 'truck_id');
+    }
 }
