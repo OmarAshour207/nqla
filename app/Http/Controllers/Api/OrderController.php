@@ -30,6 +30,15 @@ class OrderController extends BaseController
         return $this->sendResponse($success, __("Data get successfully"));
     }
 
+    public function index()
+    {
+        $orders = Order::where('user_id', auth()->user()->id)
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return $this->sendResponse(OrderResource::collection($orders), __("orders"));
+    }
+
     public function calculate(Request $request)
     {
         $validator = Validator::make($request->all(), [

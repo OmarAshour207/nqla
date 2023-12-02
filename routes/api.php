@@ -12,6 +12,7 @@ Route::middleware('api')->group(function () {
     Route::post('otp/resend', [LoginController::class, 'resend']);
 
     Route::middleware('auth:sanctum')->group(function () {
+        Route::post('orders', [OrderController::class, 'index'])->name('order.index');
         Route::get('orders/config', [OrderController::class, 'config'])->name('order.config');
         Route::post('orders/calculate', [OrderController::class, 'calculate'])->name('order.calculate');
     });
