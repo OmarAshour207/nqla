@@ -3,12 +3,17 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\OrderResource;
 use App\Http\Traits\OrderOperations;
+use App\Mail\OrderCreated;
+use App\Models\Address;
 use App\Models\City;
 use App\Models\Load;
+use App\Models\Order;
 use App\Models\Price;
 use App\Models\Truck;
 use App\Models\TruckType;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -48,6 +53,7 @@ class OrderController extends Controller
             'load_id'           => 'required|numeric',
             'quantity'          => 'required|numeric',
             'insurance_price'   => 'required|numeric',
+            'store'             => 'sometimes|nullable'
         ]);
 
         $total = 0;
@@ -64,10 +70,9 @@ class OrderController extends Controller
             $cityParts = explode(' ', $city);
 
             $city = City::when($cityParts, function ($query) use ($cityParts) {
+                $query->whereTranslation('name', $cityParts[0]);
                 for ($j = 0;$j < count($cityParts);$j++) {
-                    if ($j == 0)
-                        $query->whereTranslation('name', $cityParts[$j]);
-                    else
+                    if ($j != 0)
                         $query->orWhereTranslation('name', $cityParts[$j]);
                 }
             })->first();
@@ -94,15 +99,32 @@ class OrderController extends Controller
 
             $total += $price->price * $kilometers;
         }
-        $total += ($total * $commission) + $tripOpenValue * $quantity;
 
-        return response()->json([
-            'total'         => (float) number_format($total, 2, '.', ''),
-            'commission'    => $commission,
-            'open_value'    => $tripOpenValue,
-            'total_distance'=> $totalDistance
-        ]);
+        $success = [];
+        $success['sub_total'] = (float) number_format(($total * $quantity), 2, '.', '');
+        $total += ($success['sub_total'] * $commission) + $tripOpenValue + $success['sub_total'];
+
+        $success['total'] = (float) number_format($total, 2, '.', '');
+        $success['commission']    = $commission;
+        $success['open_value']    = $tripOpenValue;
+        $success['total_distance'] = $totalDistance;
+
+        if (isset($data['store']) && $data['store']) {
+            $order = $this->store(array_merge($success, $data));
+            $success['redirect_url'] = route('user.orders.success', ['success' => true, 'order' => $order->id]);
+        }
+
+        return response()->json($success);
     }
 
+    public function success(Request $request)
+    {
+        $orderId = $request->input('order');
 
+        $order = Order::whereId($orderId)->first();
+        if (!$order)
+            return redirect()->route('user.orders');
+
+        return view('frontend.orders.show', compact('order'));
+    }
 }

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('truck_types', function (Blueprint $table) {
             $table->id();
-            $table->string('image');
+            $table->string('image')->nullable();
             $table->unsignedBigInteger('truck_id');
             $table->foreign('truck_id')->references('id')->on('trucks')->onDelete('cascade');
         });

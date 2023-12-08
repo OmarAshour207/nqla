@@ -2,6 +2,9 @@
 
 namespace App\Http\Traits;
 
+use App\Mail\OrderCreated;
+use App\Models\Address;
+use App\Models\Order;
 use Carbon\Carbon;
 
 trait OrderOperations
@@ -26,7 +29,7 @@ trait OrderOperations
         return $angle * $earthRadius;
     }
 
-    public function generateTrackId()
+    public function generateTrackId(): string
     {
         $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $trackNumber = '';
@@ -38,5 +41,60 @@ trait OrderOperations
         }
 
         return $trackNumber;
+    }
+
+    public function saveAddress($address, $orderId): void
+    {
+        for ($i = 0;$i < count($address);$i++) {
+            Address::create([
+                'order_id'  => $orderId,
+                'lat'       => $address[$i]['lat'],
+                'lng'       => $address[$i]['lng'],
+                'address'   => $address[$i]['address'],
+                'station'   => $i+1
+            ]);
+        }
+    }
+
+    public function sendNewOrderMail($data): void
+    {
+        sendMail(auth()->user()->email, new OrderCreated([
+            'title'         => __("New Order created"),
+            'sub_total'     => $data['sub_total'],
+            'total'         => $data['total']
+        ]));
+    }
+
+    public function saveOrder($data): Order
+    {
+        return Order::create([
+            'user_email'        => auth()->user()->email,
+            'track_id'          => $this->generateTrackId(),
+            'user_id'           => auth()->user()->id,
+            'truck_id'          => $data['truck_id'],
+            'truck_type_id'     => $data['truck_type_id'],
+            'load_id'           => $data['load_id'],
+            'delivery_status'   => 'pending',
+            'payment_status'    => 'pending',
+            'quantity'          => $data['quantity'],
+            'vat'               => 0.15,
+            'commission'        => $data['commission'],
+            'discount'          => 0,
+            'sub_total'         => $data['sub_total'],
+            'total'             => $data['total'],
+            'time'              => Carbon::createFromFormat('Y-m-d H:i', $data['date'] . $data['time']),
+        ]);
+    }
+
+    public function store($data): Order
+    {
+        $order = $this->saveOrder($data);
+
+        $this->saveAddress($data['address'], $order->id);
+
+        $this->sendNewOrderMail($data);
+
+        return $order;
+//        return $this->sendResponse(new OrderResource($order), __('Order created successfully'));
     }
 }

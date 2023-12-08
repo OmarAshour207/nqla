@@ -100,63 +100,20 @@ class OrderController extends BaseController
             $total += $price->price * $kilometers;
         }
         $success = [];
-        $success['sub_total'] = $total * $quantity;
+        $success['sub_total'] = (float) number_format(($total * $quantity), 2, '.', '');
         $total += ($success['sub_total'] * $commission) + $tripOpenValue + $success['sub_total'];
+
 
         $success['total'] = (float) number_format($total, 2, '.', '');
         $success['commission']    = $commission;
         $success['open_value']    = $tripOpenValue;
         $success['total_distance'] = $totalDistance;
 
-        if (!$data['store'])
-            return $this->sendResponse($success, __("Success"));
-
-        $success['data'] = $data;
-
-        return $this->store($success);
-    }
-
-    public function store($data)
-    {
-        $savingData = $data['data'];
-        $address = $savingData['address'];
-
-        $order = Order::create([
-            'user_email'        => "omarzizo207@gmail.com",//auth()->user()->email,
-            'track_id'          => $this->generateTrackId(),
-            'user_id'           => 1,//auth()->user()->id,
-            'truck_id'          => $savingData['truck_id'],
-            'truck_type_id'     => $savingData['truck_type_id'],
-            'load_id'           => $savingData['load_id'],
-            'delivery_status'   => 'pending',
-            'payment_status'    => 'pending',
-            'quantity'          => $savingData['quantity'],
-            'vat'               => 0.15,
-            'commission'        => $data['commission'],
-            'discount'          => 0,
-            'sub_total'         => $data['sub_total'],
-            'total'             => $data['total'],
-            'time'              => Carbon::createFromFormat('Y-m-d H:i', $savingData['date'] . $savingData['time']),
-        ]);
-
-        for ($i = 0;$i < count($address);$i++) {
-            Address::create([
-                'order_id'  => $order->id,
-                'lat'       => $address[$i]['lat'],
-                'lng'       => $address[$i]['lng'],
-                'address'   => $address[$i]['address'],
-                'station'   => $i+1
-            ]);
+        if (isset($data['store']) && $data['store']) {
+            $this->store(array_merge($success, $data));
         }
 
-        // send Mail to user
-        sendMail("omarzizo207@gmail.com", new OrderCreated([
-            'title'         => __("New Order created"),
-            'sub_total'     => $data['sub_total'],
-            'total'         => $data['total']
-        ]));
-
-        return $this->sendResponse(new OrderResource($order), __('Order created successfully'));
+        return $this->sendResponse($success, __("Success"));
     }
 
 }

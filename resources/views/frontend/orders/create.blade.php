@@ -417,11 +417,12 @@
             $('#order-form').submit(function (e) {
                 e.preventDefault();
 
-                var makingOrder = $(this).data('make-order');
+                var clickedButton = $(document.activeElement);
+                var store = clickedButton.data('store');
+
                 var inputs = $('#order-form :input');
                 var values = {};
                 var addresses = [];
-                console.log("Order " + makingOrder);
 
                 $('.address').each(function() {
                     if ($(this).data('address')) {
@@ -452,6 +453,7 @@
                         quantity: values.quantity,
                         date: values.date,
                         time: values.time,
+                        store: store
                      }, beforeSend: function () {
                         $('.error').html('').css('display', 'none');
                         $('.input-submit').prop('disabled', true);
@@ -464,6 +466,12 @@
 
                         $('#preloder').fadeOut();
                         $('.input-submit').prop('disabled', false);
+
+                        if (data.redirect_url) {
+                            setTimeout(function() {
+                                window.location.href = data.redirect_url;
+                            }, 3000);
+                        }
                     }, error: function(data) {
                         $.each(data.responseJSON.errors, function(key, value) {
                             $('.error').append("<p class='mb-0'>" +
@@ -631,8 +639,8 @@
                             <hr>
 
                             <div class="input-control">
-                                <input type="submit" class="input-submit" data-make-order="false" value="{{ __('Calculate Price') }}">
-                                <input type="submit" class="input-submit" data-make-order="true" value="{{ __('Make the order') }}">
+                                <input type="submit" data-store="" class="input-submit" value="{{ __('Calculate Price') }}">
+                                <input type="submit" data-store="save" class="input-submit" value="{{ __('Make the order') }}">
                             </div>
 
                         </form>

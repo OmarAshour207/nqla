@@ -107,6 +107,7 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('orders', [UserOrderController::class, 'show'])->name('user.orders');
         Route::get('orders/create', [UserOrderController::class, 'create'])->name('user.orders.create');
+        Route::get('orders/success', [UserOrderController::class, 'success'])->name('user.orders.success');
         Route::post('orders/calculate', [UserOrderController::class, 'calculate'])->name('user.orders.calculate');
 
         Route::post('/upload/image', [ImageController::class, 'uploadPhoto'])->name('upload.image');
